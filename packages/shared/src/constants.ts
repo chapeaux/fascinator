@@ -2,10 +2,10 @@ export const VERSION = "0.1.0";
 
 export const DEFAULT_SERVER_PORT = 3078;
 export const DEFAULT_MANAGER_PORT = 3079;
-export const DEFAULT_HOST_PORT = 3100;
+export const DEFAULT_HOST_PORT = 3200;
 export const MAX_SLOTS = 16;
-export const PORT_RANGE_START = 3100;
-export const PORT_RANGE_END = 3115;
+export const PORT_RANGE_START = 3200;
+export const PORT_RANGE_END = 3215;
 
 export const MSG_SYNC = 0;
 export const MSG_AWARENESS = 1;

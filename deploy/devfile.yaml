@@ -21,7 +21,7 @@ components:
         - name: FASCINATOR_MANAGER_PORT
           value: "3079"
         - name: FASCINATOR_HOST_PORT
-          value: "3100"
+          value: "3200"
         - name: FASCINATOR_DATA_DIR
           value: /data
         - name: FASCINATOR_HOST_NAME

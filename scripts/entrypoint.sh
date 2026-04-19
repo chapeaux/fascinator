@@ -18,13 +18,13 @@ deno run \
   "$PROJECT_DIR/packages/manager/src/main.ts" &
 MANAGER_PID=$!
 
-echo "Starting host code-server on port ${FASCINATOR_HOST_PORT:-3100}..."
+echo "Starting host code-server on port ${FASCINATOR_HOST_PORT:-3200}..."
 export FASCINATOR_SLOT_ID=0
 export FASCINATOR_SERVER_URL="ws://localhost:${FASCINATOR_SERVER_PORT:-3078}"
 export FASCINATOR_USER_NAME="${FASCINATOR_HOST_NAME:-Developer}"
 
 code-server \
-  --port "${FASCINATOR_HOST_PORT:-3100}" \
+  --port "${FASCINATOR_HOST_PORT:-3200}" \
   --auth none \
   --user-data-dir "$DATA_DIR/code-server/slot-0" \
   --disable-telemetry \
@@ -41,6 +41,6 @@ trap cleanup EXIT INT TERM
 echo "Fascinator is running."
 echo "  Collaboration server: localhost:${FASCINATOR_SERVER_PORT:-3078}"
 echo "  IDE Manager:          localhost:${FASCINATOR_MANAGER_PORT:-3079}"
-echo "  Host IDE:             localhost:${FASCINATOR_HOST_PORT:-3100}"
+echo "  Host IDE:             localhost:${FASCINATOR_HOST_PORT:-3200}"
 
 wait
