@@ -1,9 +1,23 @@
 schemaVersion: 2.2.2
 metadata:
-  name: fascinator-workspace
-  displayName: Fascinator Collaborative Workspace
-  description: Multi-user collaborative editing environment powered by Yjs CRDTs
+  name: repo-fascinator
+  displayName: Git Repository + Fascinator
+  description: Clone a repository and collaborate on it with multi-user editing
   language: TypeScript
+
+projects:
+  - name: my-project
+    git:
+      remotes:
+        origin: https://github.com/example/my-project.git
+      checkoutFrom:
+        revision: main
+  - name: fascinator
+    git:
+      remotes:
+        origin: https://github.com/chapeaux/fascinator.git
+      checkoutFrom:
+        revision: main
 
 components:
   - name: tools
@@ -27,6 +41,10 @@ components:
         - name: FASCINATOR_HOST_NAME
           value: Developer
       endpoints:
+        - name: app
+          targetPort: 8080
+          exposure: public
+          protocol: https
         - name: fascinator-mgr
           targetPort: 3079
           exposure: public
@@ -50,14 +68,23 @@ commands:
         kind: run
         isDefault: true
 
-  - id: build-extension
+  - id: build-project
     exec:
-      label: Build Extension
+      label: Build Project
       component: tools
-      workingDir: ${PROJECTS_ROOT}/fascinator/packages/extension
-      commandLine: npm run package
+      workingDir: ${PROJECTS_ROOT}/my-project
+      commandLine: echo "Replace this with your project's build command"
       group:
         kind: build
+
+  - id: run-project
+    exec:
+      label: Run Project
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/my-project
+      commandLine: echo "Replace this with your project's run command"
+      group:
+        kind: run
 
 events:
   postStart:

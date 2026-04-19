@@ -1,9 +1,9 @@
 schemaVersion: 2.2.2
 metadata:
-  name: fascinator-workspace
-  displayName: Fascinator Collaborative Workspace
-  description: Multi-user collaborative editing environment powered by Yjs CRDTs
-  language: TypeScript
+  name: node-fascinator
+  displayName: Node.js + Fascinator
+  description: Node.js development workspace with multi-user collaborative editing
+  language: JavaScript
 
 components:
   - name: tools
@@ -16,6 +16,8 @@ components:
         - name: fascinator-data
           path: /data
       env:
+        - name: NODE_ENV
+          value: development
         - name: FASCINATOR_SERVER_PORT
           value: "3078"
         - name: FASCINATOR_MANAGER_PORT
@@ -27,6 +29,10 @@ components:
         - name: FASCINATOR_HOST_NAME
           value: Developer
       endpoints:
+        - name: node-app
+          targetPort: 3000
+          exposure: public
+          protocol: https
         - name: fascinator-mgr
           targetPort: 3079
           exposure: public
@@ -50,14 +56,33 @@ commands:
         kind: run
         isDefault: true
 
-  - id: build-extension
+  - id: npm-install
     exec:
-      label: Build Extension
+      label: Install Dependencies
       component: tools
-      workingDir: ${PROJECTS_ROOT}/fascinator/packages/extension
-      commandLine: npm run package
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: npm install
       group:
         kind: build
+        isDefault: true
+
+  - id: npm-start
+    exec:
+      label: Start Node App
+      component: tools
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: npm start
+      group:
+        kind: run
+
+  - id: npm-test
+    exec:
+      label: Run Tests
+      component: tools
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: npm test
+      group:
+        kind: test
 
 events:
   postStart:

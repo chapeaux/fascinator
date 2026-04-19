@@ -1,8 +1,8 @@
 schemaVersion: 2.2.2
 metadata:
-  name: fascinator-workspace
-  displayName: Fascinator Collaborative Workspace
-  description: Multi-user collaborative editing environment powered by Yjs CRDTs
+  name: deno-fascinator
+  displayName: Deno + Fascinator
+  description: Deno development workspace with multi-user collaborative editing
   language: TypeScript
 
 components:
@@ -16,6 +16,8 @@ components:
         - name: fascinator-data
           path: /data
       env:
+        - name: DENO_DIR
+          value: /home/user/.deno
         - name: FASCINATOR_SERVER_PORT
           value: "3078"
         - name: FASCINATOR_MANAGER_PORT
@@ -27,6 +29,10 @@ components:
         - name: FASCINATOR_HOST_NAME
           value: Developer
       endpoints:
+        - name: deno-app
+          targetPort: 8000
+          exposure: public
+          protocol: https
         - name: fascinator-mgr
           targetPort: 3079
           exposure: public
@@ -50,14 +56,23 @@ commands:
         kind: run
         isDefault: true
 
-  - id: build-extension
+  - id: deno-run
     exec:
-      label: Build Extension
+      label: Run Deno App
       component: tools
-      workingDir: ${PROJECTS_ROOT}/fascinator/packages/extension
-      commandLine: npm run package
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: deno run --allow-all main.ts
       group:
-        kind: build
+        kind: run
+
+  - id: deno-test
+    exec:
+      label: Run Deno Tests
+      component: tools
+      workingDir: ${PROJECTS_ROOT}
+      commandLine: deno test --allow-all
+      group:
+        kind: test
 
 events:
   postStart:
