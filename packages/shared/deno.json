@@ -1,0 +1,8 @@
+{
+  "name": "@fascinator/shared",
+  "version": "0.1.0",
+  "exports": {
+    "./protocol": "./src/protocol.ts",
+    "./constants": "./src/constants.ts"
+  }
+}

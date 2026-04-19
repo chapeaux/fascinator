@@ -1,0 +1,17 @@
+{
+  "name": "@fascinator/server",
+  "version": "0.1.0",
+  "exports": "./src/main.ts",
+  "tasks": {
+    "start": "deno run --allow-net --allow-read --allow-write --allow-env --unstable-kv src/main.ts",
+    "dev": "deno run --watch --allow-net --allow-read --allow-write --allow-env --unstable-kv src/main.ts"
+  },
+  "imports": {
+    "@fascinator/shared/": "../shared/src/",
+    "yjs": "npm:yjs@^13.6.0",
+    "y-protocols/sync": "npm:y-protocols@^1.0.0/sync",
+    "y-protocols/awareness": "npm:y-protocols@^1.0.0/awareness",
+    "lib0/encoding": "npm:lib0@^0.2.0/encoding",
+    "lib0/decoding": "npm:lib0@^0.2.0/decoding"
+  }
+}

@@ -1,0 +1,60 @@
+schemaVersion: 2.2.2
+metadata:
+  name: fascinator-workspace
+  displayName: Fascinator Collaborative Workspace
+  description: Multi-user collaborative editing environment powered by Yjs CRDTs
+  language: TypeScript
+
+components:
+  - name: tools
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi8-latest
+      memoryLimit: 4G
+      cpuLimit: "2"
+      mountSources: true
+      volumeMounts:
+        - name: fascinator-data
+          path: /data
+      env:
+        - name: FASCINATOR_SERVER_PORT
+          value: "3078"
+        - name: FASCINATOR_MANAGER_PORT
+          value: "3079"
+        - name: FASCINATOR_HOST_PORT
+          value: "3100"
+        - name: FASCINATOR_DATA_DIR
+          value: /data
+        - name: FASCINATOR_HOST_NAME
+          value: Developer
+      endpoints:
+        - name: fascinator-mgr
+          targetPort: 3079
+          exposure: public
+          protocol: https
+        - name: fascinator-ws
+          targetPort: 3078
+          exposure: internal
+
+  - name: fascinator-data
+    volume:
+      size: 1Gi
+
+commands:
+  - id: start-fascinator
+    exec:
+      label: Start Fascinator Services
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/fascinator
+      commandLine: ./scripts/entrypoint.sh
+      group:
+        kind: run
+        isDefault: true
+
+  - id: build-extension
+    exec:
+      label: Build Extension
+      component: tools
+      workingDir: ${PROJECTS_ROOT}/fascinator/packages/extension
+      commandLine: npm run package
+      group:
+        kind: build

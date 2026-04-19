@@ -1,0 +1,7 @@
+node_modules/
+dist/
+*.vsix
+*.tgz
+.DS_Store
+/packages/server/deno.lock
+/packages/manager/deno.lock

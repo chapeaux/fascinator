@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fascinator - Join Workspace</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <div id="join-view" class="card">
+      <div class="logo">F</div>
+      <h1>Fascinator</h1>
+      <p class="subtitle">Join <span id="host-name">a developer</span>'s workspace</p>
+      <form id="join-form">
+        <label for="display-name">Your name</label>
+        <input type="text" id="display-name" placeholder="Enter your name" required maxlength="32" autofocus>
+        <button type="submit">Join</button>
+      </form>
+    </div>
+
+    <div id="loading-view" class="card hidden">
+      <div class="spinner"></div>
+      <h2>Preparing your workspace</h2>
+      <p id="loading-status">Starting IDE...</p>
+    </div>
+
+    <div id="error-view" class="card hidden">
+      <div class="error-icon">!</div>
+      <h2>Something went wrong</h2>
+      <p id="error-message"></p>
+      <button id="retry-btn">Try Again</button>
+    </div>
+  </div>
+  <script src="/join.js"></script>
+</body>
+</html>
