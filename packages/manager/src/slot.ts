@@ -55,15 +55,22 @@ export function createSlot(
     args.unshift("--install-extension", extensionPath);
   }
 
-  // Inherit env but strip VSCODE_*/CHECODE_* vars that cause code-server
-  // to connect to the host che-code instance instead of starting fresh
+  // Inherit env but isolate from the host che-code instance
   const parentEnv = Deno.env.toObject();
   const env: Record<string, string> = {};
   for (const [key, value] of Object.entries(parentEnv)) {
-    if (key.startsWith("VSCODE_") || key.startsWith("CHECODE_")) continue;
+    if (key.startsWith("VSCODE_")) continue;
+    if (key.startsWith("CHECODE_")) continue;
     if (key === "BROWSER") continue;
     env[key] = value;
   }
+
+  // Isolate IPC sockets so code-server doesn't find che-code
+  const slotTmpDir = `${dataDir}/code-server/slot-${slotId}/tmp`;
+  try { Deno.mkdirSync(slotTmpDir, { recursive: true }); } catch { /* exists */ }
+
+  env.XDG_RUNTIME_DIR = slotTmpDir;
+  env.TMPDIR = slotTmpDir;
   env.FASCINATOR_SLOT_ID = String(slotId);
   env.FASCINATOR_SERVER_URL = `ws://localhost:${DEFAULT_SERVER_PORT}`;
   env.FASCINATOR_USER_NAME = displayName;
