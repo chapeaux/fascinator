@@ -14,6 +14,24 @@ function generatePassword(): string {
   return Array.from(bytes, (b) => b.toString(36).padStart(2, "0")).join("").slice(0, 16);
 }
 
+function findCodeServer(): string {
+  const home = Deno.env.get("HOME") || "/home/user";
+  const candidates = [
+    `${home}/.local/bin/code-server`,
+    "/usr/local/bin/code-server",
+    "/usr/bin/code-server",
+  ];
+  for (const path of candidates) {
+    try {
+      Deno.statSync(path);
+      return path;
+    } catch {
+      // not found
+    }
+  }
+  return "code-server";
+}
+
 export function createSlot(
   port: number,
   displayName: string,
@@ -38,14 +56,17 @@ export function createSlot(
   }
 
   const env: Record<string, string> = {
+    ...Object.fromEntries(Object.entries(Deno.env.toObject())),
     FASCINATOR_SLOT_ID: String(slotId),
     FASCINATOR_SERVER_URL: `ws://localhost:${DEFAULT_SERVER_PORT}`,
     FASCINATOR_USER_NAME: displayName,
   };
 
+  const codeServerBin = findCodeServer();
   let process: Deno.ChildProcess | null = null;
   try {
-    const command = new Deno.Command("code-server", { args, env, stdout: "piped", stderr: "piped" });
+    console.log(`Spawning code-server slot ${slotId} on port ${port} (${codeServerBin})`);
+    const command = new Deno.Command(codeServerBin, { args, env, stdout: "piped", stderr: "piped" });
     process = command.spawn();
   } catch (err) {
     console.error(`Failed to spawn code-server for slot ${slotId}:`, err);
