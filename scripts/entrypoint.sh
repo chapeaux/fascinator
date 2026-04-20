@@ -2,7 +2,7 @@
 set -e
 
 PROJECT_DIR="${PROJECTS_ROOT:-/projects}/fascinator"
-DATA_DIR="${FASCINATOR_DATA_DIR:-/data}"
+DATA_DIR="${FASCINATOR_DATA_DIR:-/projects/.fascinator-data}"
 
 mkdir -p "$DATA_DIR/code-server" "$DATA_DIR/kv"
 

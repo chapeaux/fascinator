@@ -6,58 +6,44 @@
 # all Fascinator services. Safe to run multiple times — skips anything
 # already installed.
 #
+# When called with --background, forks the main work into the background
+# and exits immediately (for use as a postStart hook).
+#
 set -e
 
 PROJECT_DIR="${PROJECTS_ROOT:-/projects}/fascinator"
-DATA_DIR="${FASCINATOR_DATA_DIR:-/data}"
+DATA_DIR="${FASCINATOR_DATA_DIR:-/projects/.fascinator-data}"
 DENO_INSTALL="${DENO_INSTALL:-$HOME/.deno}"
 DENO_BIN="$DENO_INSTALL/bin/deno"
 CODE_SERVER_BIN="$HOME/.local/bin/code-server"
 EXTENSION_DIR="$PROJECT_DIR/packages/extension"
+LOG_FILE="/tmp/fascinator-setup.log"
 
-log() { echo "[fascinator] $*"; }
+export PATH="$DENO_INSTALL/bin:$HOME/.local/bin:$PATH"
 
-# ── Deno ──────────────────────────────────────────────────────────────
+log() { echo "[fascinator] $*" | tee -a "$LOG_FILE"; }
 
 install_deno() {
-  if command -v deno &>/dev/null; then
-    log "Deno already installed: $(deno --version | head -1)"
-    return
-  fi
-
   if [ -x "$DENO_BIN" ]; then
-    export PATH="$DENO_INSTALL/bin:$PATH"
-    log "Deno found at $DENO_BIN: $(deno --version | head -1)"
+    log "Deno already installed"
     return
   fi
 
   log "Installing Deno..."
-  curl -fsSL https://deno.land/install.sh | sh
-  export PATH="$DENO_INSTALL/bin:$PATH"
-  log "Deno installed: $(deno --version | head -1)"
+  curl -fsSL https://deno.land/install.sh | sh >> "$LOG_FILE" 2>&1
+  log "Deno installed"
 }
 
-# ── code-server ───────────────────────────────────────────────────────
-
 install_code_server() {
-  if command -v code-server &>/dev/null; then
-    log "code-server already installed: $(code-server --version | head -1)"
-    return
-  fi
-
   if [ -x "$CODE_SERVER_BIN" ]; then
-    export PATH="$HOME/.local/bin:$PATH"
-    log "code-server found at $CODE_SERVER_BIN"
+    log "code-server already installed"
     return
   fi
 
   log "Installing code-server..."
-  curl -fsSL https://code-server.dev/install.sh | sh -s -- --method standalone --prefix="$HOME/.local"
-  export PATH="$HOME/.local/bin:$PATH"
-  log "code-server installed: $(code-server --version | head -1)"
+  curl -fsSL https://code-server.dev/install.sh | sh -s -- --method standalone --prefix="$HOME/.local" >> "$LOG_FILE" 2>&1
+  log "code-server installed"
 }
-
-# ── Extension ─────────────────────────────────────────────────────────
 
 build_extension() {
   if [ -f "$EXTENSION_DIR/dist/extension.js" ]; then
@@ -67,36 +53,29 @@ build_extension() {
 
   log "Installing extension dependencies..."
   cd "$EXTENSION_DIR"
-  npm install --no-audit --no-fund
+  npm install --no-audit --no-fund >> "$LOG_FILE" 2>&1
 
   log "Building extension..."
-  npx webpack --mode production
+  npx webpack --mode production >> "$LOG_FILE" 2>&1
 
   log "Extension built"
   cd "$PROJECT_DIR"
 }
-
-# ── Data directories ──────────────────────────────────────────────────
 
 prepare_data() {
   mkdir -p "$DATA_DIR/code-server" "$DATA_DIR/kv"
   log "Data directory ready: $DATA_DIR"
 }
 
-# ── Cache Deno dependencies ──────────────────────────────────────────
-
 cache_deno_deps() {
   log "Caching Deno dependencies..."
-  deno cache "$PROJECT_DIR/packages/server/src/main.ts" 2>/dev/null || true
-  deno cache "$PROJECT_DIR/packages/manager/src/main.ts" 2>/dev/null || true
+  "$DENO_BIN" cache "$PROJECT_DIR/packages/server/src/main.ts" >> "$LOG_FILE" 2>&1 || true
+  "$DENO_BIN" cache "$PROJECT_DIR/packages/manager/src/main.ts" >> "$LOG_FILE" 2>&1 || true
   log "Deno dependencies cached"
 }
 
-# ── Main ──────────────────────────────────────────────────────────────
-
-main() {
+run_setup() {
   log "Setting up Fascinator..."
-  log ""
 
   install_deno
   install_code_server
@@ -104,11 +83,17 @@ main() {
   prepare_data
   cache_deno_deps
 
-  log ""
   log "Setup complete. Starting Fascinator services..."
-  log ""
 
-  exec "$PROJECT_DIR/scripts/entrypoint.sh"
+  "$PROJECT_DIR/scripts/entrypoint.sh" >> "$LOG_FILE" 2>&1
 }
 
-main "$@"
+# When called with --background, fork and exit immediately
+# so the postStart hook returns without blocking
+if [ "${1:-}" = "--background" ]; then
+  run_setup &
+  disown
+  exit 0
+fi
+
+run_setup

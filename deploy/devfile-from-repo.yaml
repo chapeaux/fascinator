@@ -26,10 +26,11 @@ components:
       memoryLimit: 4G
       cpuLimit: "2"
       mountSources: true
-      volumeMounts:
-        - name: fascinator-data
-          path: /data
       env:
+        - name: DENO_INSTALL
+          value: /home/user/.deno
+        - name: PATH
+          value: /home/user/.deno/bin:/home/user/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
         - name: FASCINATOR_SERVER_PORT
           value: "3078"
         - name: FASCINATOR_MANAGER_PORT
@@ -37,7 +38,7 @@ components:
         - name: FASCINATOR_HOST_PORT
           value: "3200"
         - name: FASCINATOR_DATA_DIR
-          value: /data
+          value: /projects/.fascinator-data
         - name: FASCINATOR_HOST_NAME
           value: Developer
       endpoints:
@@ -53,17 +54,13 @@ components:
           targetPort: 3078
           exposure: internal
 
-  - name: fascinator-data
-    volume:
-      size: 1Gi
-
 commands:
   - id: fascinator-setup
     exec:
       label: Setup and Start Fascinator
       component: tools
-      workingDir: ${PROJECTS_ROOT}/fascinator
-      commandLine: ./scripts/setup.sh
+      commandLine: /projects/fascinator/scripts/setup.sh --background
+      workingDir: /projects/fascinator
       group:
         kind: run
         isDefault: true
@@ -72,7 +69,7 @@ commands:
     exec:
       label: Build Project
       component: tools
-      workingDir: ${PROJECTS_ROOT}/my-project
+      workingDir: /projects/my-project
       commandLine: echo "Replace this with your project's build command"
       group:
         kind: build
@@ -81,7 +78,7 @@ commands:
     exec:
       label: Run Project
       component: tools
-      workingDir: ${PROJECTS_ROOT}/my-project
+      workingDir: /projects/my-project
       commandLine: echo "Replace this with your project's run command"
       group:
         kind: run
