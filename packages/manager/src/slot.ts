@@ -82,12 +82,19 @@ export function createSlot(
     console.log(`  bind: 0.0.0.0:${port}`);
     console.log(`  data: ${userDataDir}`);
 
-    const command = new Deno.Command(codeServerBin, {
-      args,
-      env,
+    // Build env -i command string — this is proven to work in Dev Spaces
+    const envPairs = Object.entries(env).map(([k, v]) => `${k}='${v}'`).join(" ");
+    const csArgs = args.map((a) => `'${a}'`).join(" ");
+    const shellCmd = `env -i ${envPairs} '${codeServerBin}' ${csArgs}`;
+
+    console.log(`  cmd: ${shellCmd.slice(0, 200)}...`);
+
+    const command = new Deno.Command("/bin/bash", {
+      args: ["-c", shellCmd],
       stdin: "null",
       stdout: "inherit",
       stderr: "inherit",
+      clearEnv: true,
     });
     process = command.spawn();
   } catch (err) {
