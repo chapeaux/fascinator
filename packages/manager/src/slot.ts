@@ -63,20 +63,17 @@ export function createSlot(
   };
 
   const codeServerBin = findCodeServer();
-  const logFile = `${dataDir}/code-server/slot-${slotId}.log`;
   let process: Deno.ChildProcess | null = null;
   try {
     console.log(`Spawning code-server slot ${slotId} on port ${port} (${codeServerBin})`);
     console.log(`  args: ${args.join(" ")}`);
-    console.log(`  log: ${logFile}`);
 
-    const shellArgs = args.map((a) => `'${a}'`).join(" ");
-    const command = new Deno.Command("/bin/bash", {
-      args: ["-c", `exec ${codeServerBin} ${shellArgs} > '${logFile}' 2>&1`],
+    const command = new Deno.Command(codeServerBin, {
+      args,
       env,
       stdin: "null",
-      stdout: "null",
-      stderr: "null",
+      stdout: "inherit",
+      stderr: "inherit",
     });
     process = command.spawn();
   } catch (err) {
