@@ -42,9 +42,12 @@ export function createSlot(
   const slotId = nextSlotId++;
   const password = generatePassword();
   const userDataDir = `${dataDir}/code-server/slot-${slotId}`;
+  const slotTmpDir = `${userDataDir}/tmp`;
+
+  try { Deno.mkdirSync(slotTmpDir, { recursive: true }); } catch { /* exists */ }
 
   const args = [
-    "--port", String(port),
+    "--bind-addr", `0.0.0.0:${port}`,
     "--auth", "none",
     "--user-data-dir", userDataDir,
     "--disable-telemetry",
@@ -55,31 +58,29 @@ export function createSlot(
     args.unshift("--install-extension", extensionPath);
   }
 
-  // Inherit env but isolate from the host che-code instance
-  const parentEnv = Deno.env.toObject();
-  const env: Record<string, string> = {};
-  for (const [key, value] of Object.entries(parentEnv)) {
-    if (key.startsWith("VSCODE_")) continue;
-    if (key.startsWith("CHECODE_")) continue;
-    if (key === "BROWSER") continue;
-    env[key] = value;
-  }
-
-  // Isolate IPC sockets so code-server doesn't find che-code
-  const slotTmpDir = `${dataDir}/code-server/slot-${slotId}/tmp`;
-  try { Deno.mkdirSync(slotTmpDir, { recursive: true }); } catch { /* exists */ }
-
-  env.XDG_RUNTIME_DIR = slotTmpDir;
-  env.TMPDIR = slotTmpDir;
-  env.FASCINATOR_SLOT_ID = String(slotId);
-  env.FASCINATOR_SERVER_URL = `ws://localhost:${DEFAULT_SERVER_PORT}`;
-  env.FASCINATOR_USER_NAME = displayName;
+  // Minimal clean env — only what code-server needs to run
+  const home = Deno.env.get("HOME") || "/home/user";
+  const env: Record<string, string> = {
+    HOME: home,
+    USER: Deno.env.get("USER") || "user",
+    PATH: `${home}/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin`,
+    SHELL: Deno.env.get("SHELL") || "/bin/bash",
+    LANG: Deno.env.get("LANG") || "en_US.UTF-8",
+    TMPDIR: slotTmpDir,
+    XDG_RUNTIME_DIR: slotTmpDir,
+    XDG_DATA_HOME: `${userDataDir}/data`,
+    XDG_CONFIG_HOME: `${userDataDir}/config`,
+    FASCINATOR_SLOT_ID: String(slotId),
+    FASCINATOR_SERVER_URL: `ws://localhost:${DEFAULT_SERVER_PORT}`,
+    FASCINATOR_USER_NAME: displayName,
+  };
 
   const codeServerBin = findCodeServer();
   let process: Deno.ChildProcess | null = null;
   try {
     console.log(`Spawning code-server slot ${slotId} on port ${port} (${codeServerBin})`);
-    console.log(`  args: ${args.join(" ")}`);
+    console.log(`  bind: 0.0.0.0:${port}`);
+    console.log(`  data: ${userDataDir}`);
 
     const command = new Deno.Command(codeServerBin, {
       args,
