@@ -23,38 +23,30 @@ export function getWorkspaceName(): string {
   return workspaceName;
 }
 
-function slotUrl(port: number): string {
-  // Explicit override
+// Map port numbers to devfile endpoint names for direct public routes
+const portEndpointMap: Record<number, string> = {
+  3201: "guest-1",
+  3202: "guest-2",
+  3203: "guest-3",
+};
+
+function slotUrl(port: number, req?: Request): string {
   const baseUrl = Deno.env.get("FASCINATOR_BASE_URL");
   if (baseUrl) return `${baseUrl}/${port}/`;
 
-  // Dev Spaces URL pattern: https://devspaces.{cluster}/{user}/{workspace}/{port}/
-  const namespace = Deno.env.get("DEVWORKSPACE_NAMESPACE") || "";
-  const wsName = Deno.env.get("DEVWORKSPACE_NAME") || "";
-  const cheHost = Deno.env.get("CHE_DASHBOARD_URL")
-    || Deno.env.get("CHE_API")
-    || Deno.env.get("DEVWORKSPACE_IDEURL")
-    || "";
-
-  if (namespace && wsName) {
-    // Derive user from namespace (e.g. "ldary-dev" -> "ldary")
-    const user = namespace.replace(/-dev$/, "");
-
-    // Try to get the cluster domain from a known URL
-    let clusterDomain = "";
-    if (cheHost) {
-      try {
-        const url = new URL(cheHost);
-        // e.g. "devspaces.apps.rm3.7wse.p1.openshiftapps.com" -> "apps.rm3.7wse.p1.openshiftapps.com"
-        const parts = url.hostname.split(".");
-        clusterDomain = parts.slice(1).join(".");
-      } catch {
-        // not a URL
+  // Derive the guest endpoint URL from the manager's own URL
+  // Manager URL: https://{routing-prefix}-fascinator-mgr.{cluster}/
+  // Guest URL:   https://{routing-prefix}-guest-1.{cluster}/
+  const endpointName = portEndpointMap[port];
+  if (endpointName && req) {
+    const host = req.headers.get("host") || req.headers.get("x-forwarded-host") || "";
+    if (host) {
+      // Replace the endpoint suffix: "...-fascinator-mgr.apps..." -> "...-guest-1.apps..."
+      const guestHost = host.replace(/fascinator-mgr\./, `${endpointName}.`);
+      if (guestHost !== host) {
+        const proto = req.headers.get("x-forwarded-proto") || "https";
+        return `${proto}://${guestHost}/?folder=/projects`;
       }
-    }
-
-    if (clusterDomain) {
-      return `https://devspaces.${clusterDomain}/${user}/${wsName}/${port}/?folder=/projects`;
     }
   }
 
@@ -79,7 +71,7 @@ export async function handleApi(req: Request, path: string): Promise<Response> {
   const readyMatch = path.match(/^\/api\/slots\/(\d+)\/ready$/);
   if (readyMatch && req.method === "GET") {
     const slotId = parseInt(readyMatch[1]);
-    return handleCheckReady(slotId);
+    return handleCheckReady(slotId, req);
   }
 
   return new Response("Not Found", { status: 404 });
@@ -114,7 +106,7 @@ async function handleCreateSlot(req: Request): Promise<Response> {
   const resp: CreateSlotResponse = {
     slotId: slot.slotId,
     port: slot.port,
-    url: slotUrl(port),
+    url: slotUrl(port, req),
   };
 
   return Response.json(resp, { status: 201 });
@@ -141,7 +133,7 @@ function handleDeleteSlot(slotId: number): Response {
   return new Response(null, { status: 204 });
 }
 
-async function handleCheckReady(slotId: number): Promise<Response> {
+async function handleCheckReady(slotId: number, req: Request): Promise<Response> {
   const slot = slots.get(slotId);
   if (!slot) return new Response("Not Found", { status: 404 });
 
@@ -155,7 +147,7 @@ async function handleCheckReady(slotId: number): Promise<Response> {
   }
 
   if (ready) {
-    return Response.json({ ready: true, url: slotUrl(slot.port) });
+    return Response.json({ ready: true, url: slotUrl(slot.port, req) });
   }
   return Response.json({ ready: false, status: slot.status }, { status: 503 });
 }
