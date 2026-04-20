@@ -75,11 +75,11 @@
       const slot = await resp.json();
       loadingStatus.textContent = "Waiting for IDE to start...";
 
-      const url = await pollReady(slot.slotId, 30);
+      const url = await pollReady(slot.slotId, 90);
       if (url) {
         window.location.href = url;
       } else {
-        showError("IDE took too long to start. Please try again.");
+        showError("IDE took too long to start. Check /tmp/fascinator-setup.log in the terminal and try again.");
       }
     } catch (err) {
       showError(`Connection error: ${err.message}`);

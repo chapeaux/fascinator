@@ -64,10 +64,11 @@ export function createSlot(
 
 export async function checkSlotReady(port: number): Promise<boolean> {
   try {
-    const resp = await fetch(`http://localhost:${port}/healthz`, {
-      signal: AbortSignal.timeout(1000),
+    const resp = await fetch(`http://localhost:${port}/`, {
+      signal: AbortSignal.timeout(2000),
+      redirect: "manual",
     });
-    return resp.ok;
+    return resp.status < 500;
   } catch {
     return false;
   }
