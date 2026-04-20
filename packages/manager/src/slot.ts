@@ -99,7 +99,7 @@ export function createSlot(
 
 export async function checkSlotReady(port: number): Promise<boolean> {
   try {
-    const resp = await fetch(`http://localhost:${port}/`, {
+    const resp = await fetch(`http://127.0.0.1:${port}/`, {
       signal: AbortSignal.timeout(2000),
       redirect: "manual",
     });
