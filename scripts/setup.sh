@@ -19,7 +19,7 @@ CODE_SERVER_BIN="$HOME/.local/bin/code-server"
 EXTENSION_DIR="$PROJECT_DIR/packages/extension"
 LOG_FILE="/tmp/fascinator-setup.log"
 
-export PATH="$DENO_INSTALL/bin:$HOME/.local/bin:$PATH"
+export PATH="$DENO_INSTALL/bin:$HOME/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
 
 log() { echo "[fascinator] $*" | tee -a "$LOG_FILE"; }
 
