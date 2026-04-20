@@ -3,6 +3,10 @@ import { PORT_RANGE_START, PORT_RANGE_END } from "@fascinator/shared/constants.t
 export class PortAllocator {
   private used = new Set<number>();
 
+  reserve(port: number): void {
+    this.used.add(port);
+  }
+
   allocate(): number {
     for (let port = PORT_RANGE_START; port <= PORT_RANGE_END; port++) {
       if (!this.used.has(port)) {

@@ -1,7 +1,7 @@
 import type { SlotInfo } from "@fascinator/shared/protocol.ts";
 import { DEFAULT_SERVER_PORT } from "@fascinator/shared/constants.ts";
 
-let nextSlotId = 0;
+let nextSlotId = 1;
 
 export interface ManagedSlot extends SlotInfo {
   process: Deno.ChildProcess | null;

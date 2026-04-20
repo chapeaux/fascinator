@@ -6,8 +6,11 @@ import { PortAllocator } from "./port-allocator.ts";
 const portAllocator = new PortAllocator();
 const slots = new Map<number, ManagedSlot>();
 
+const hostPort = parseInt(Deno.env.get("FASCINATOR_HOST_PORT") || "3200");
+portAllocator.reserve(hostPort);
+
 const workspaceDir = Deno.env.get("PROJECTS_ROOT") || "/projects";
-const dataDir = Deno.env.get("FASCINATOR_DATA_DIR") || "/data";
+const dataDir = Deno.env.get("FASCINATOR_DATA_DIR") || "/projects/.fascinator-data";
 const extensionPath = Deno.env.get("FASCINATOR_EXTENSION_PATH") || null;
 const hostName = Deno.env.get("FASCINATOR_HOST_NAME") || "Developer";
 const workspaceName = Deno.env.get("DEVWORKSPACE_NAME") || "Workspace";
