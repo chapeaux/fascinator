@@ -76,25 +76,41 @@ export function createSlot(
   };
 
   const codeServerBin = findCodeServer();
+  const scriptPath = `${userDataDir}/start.sh`;
   let process: Deno.ChildProcess | null = null;
   try {
     console.log(`Spawning code-server slot ${slotId} on port ${port} (${codeServerBin})`);
     console.log(`  bind: 0.0.0.0:${port}`);
     console.log(`  data: ${userDataDir}`);
 
-    // Build env -i command string — this is proven to work in Dev Spaces
-    const envPairs = Object.entries(env).map(([k, v]) => `${k}='${v}'`).join(" ");
+    // Write a startup script and execute it — avoids Deno.Command env issues
+    const envLines = Object.entries(env).map(([k, v]) => `export ${k}='${v}'`).join("\n");
     const csArgs = args.map((a) => `'${a}'`).join(" ");
-    const shellCmd = `env -i ${envPairs} '${codeServerBin}' ${csArgs}`;
+    const script = `#!/bin/bash
+exec env -i \\
+  HOME='${env.HOME}' \\
+  USER='${env.USER}' \\
+  PATH='${env.PATH}' \\
+  SHELL='${env.SHELL}' \\
+  LANG='${env.LANG}' \\
+  TMPDIR='${slotTmpDir}' \\
+  XDG_RUNTIME_DIR='${slotTmpDir}' \\
+  XDG_DATA_HOME='${userDataDir}/data' \\
+  XDG_CONFIG_HOME='${userDataDir}/config' \\
+  FASCINATOR_SLOT_ID='${slotId}' \\
+  FASCINATOR_SERVER_URL='ws://localhost:${DEFAULT_SERVER_PORT}' \\
+  FASCINATOR_USER_NAME='${displayName}' \\
+  '${codeServerBin}' ${csArgs}
+`;
 
-    console.log(`  cmd: ${shellCmd.slice(0, 200)}...`);
+    Deno.writeTextFileSync(scriptPath, script);
+    Deno.chmodSync(scriptPath, 0o755);
+    console.log(`  script: ${scriptPath}`);
 
-    const command = new Deno.Command("/bin/bash", {
-      args: ["-c", shellCmd],
+    const command = new Deno.Command(scriptPath, {
       stdin: "null",
       stdout: "inherit",
       stderr: "inherit",
-      clearEnv: true,
     });
     process = command.spawn();
   } catch (err) {
