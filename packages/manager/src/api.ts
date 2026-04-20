@@ -23,13 +23,41 @@ export function getWorkspaceName(): string {
   return workspaceName;
 }
 
-function getBaseUrl(): string {
-  return Deno.env.get("FASCINATOR_BASE_URL") || "";
-}
-
 function slotUrl(port: number): string {
-  const base = getBaseUrl();
-  if (base) return `${base}/${port}/`;
+  // Explicit override
+  const baseUrl = Deno.env.get("FASCINATOR_BASE_URL");
+  if (baseUrl) return `${baseUrl}/${port}/`;
+
+  // Dev Spaces URL pattern: https://devspaces.{cluster}/{user}/{workspace}/{port}/
+  const namespace = Deno.env.get("DEVWORKSPACE_NAMESPACE") || "";
+  const wsName = Deno.env.get("DEVWORKSPACE_NAME") || "";
+  const cheHost = Deno.env.get("CHE_DASHBOARD_URL")
+    || Deno.env.get("CHE_API")
+    || Deno.env.get("DEVWORKSPACE_IDEURL")
+    || "";
+
+  if (namespace && wsName) {
+    // Derive user from namespace (e.g. "ldary-dev" -> "ldary")
+    const user = namespace.replace(/-dev$/, "");
+
+    // Try to get the cluster domain from a known URL
+    let clusterDomain = "";
+    if (cheHost) {
+      try {
+        const url = new URL(cheHost);
+        // e.g. "devspaces.apps.rm3.7wse.p1.openshiftapps.com" -> "apps.rm3.7wse.p1.openshiftapps.com"
+        const parts = url.hostname.split(".");
+        clusterDomain = parts.slice(1).join(".");
+      } catch {
+        // not a URL
+      }
+    }
+
+    if (clusterDomain) {
+      return `https://devspaces.${clusterDomain}/${user}/${wsName}/${port}/?folder=/projects`;
+    }
+  }
+
   return `https://localhost:${port}/`;
 }
 
